@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 // Database Connection
-mongoose.connect('mongodb://127.0.0.1:27017/ayush_icd_db')
+mongoose.connect('mongodb+srv://ayush:AyushProject2025@cluster0.kqztwpq.mongodb.net/?appName=Cluster0')
 
 
 
