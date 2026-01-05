@@ -17,7 +17,7 @@ function App() {
     
     if (val.length > 1) {
       try {
-        const res = await axios.get(`http://localhost:5000/api/search?q=${val}`);
+       const res = await axios.get(`https://ayush-backend-0h8n.onrender.com/api/search?q=${val}`);
         setSuggestions(res.data);
       } catch (err) {
         console.error("API Error - Is your backend server running?", err);
