@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+
 import axios from 'axios';
 import Navbar from './components/Navbar';
 import SearchBar from './components/SearchBar';
@@ -11,33 +12,49 @@ function App() {
   const [selectedData, setSelectedData] = useState(null);
   const [isWakingUp, setIsWakingUp] = useState(false);
   const [hasPinged, setHasPinged] = useState(false);
+  const debounceRef = useRef(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [error, setError] = useState(null);
+
 
   // Connects to your backend to find diseases
-  const handleSearch = async (e) => {
-    const val = e.target.value;
-    setQuery(val);
+  const handleSearch = (e) => {
+  const val = e.target.value;
+  setQuery(val);
+  setError(null);
 
-    if (val.length > 1) {
-      try {
-        if (!hasPinged) {
-          setIsWakingUp(true);
-        }
+  if (debounceRef.current) {
+    clearTimeout(debounceRef.current);
+  }
 
-        const res = await axios.get(
-          `https://ayush-backend-0h8n.onrender.com/api/search?q=${val}`
-        );
+  if (val.length <= 1) {
+    setSuggestions([]);
+    return;
+  }
 
-        setSuggestions(res.data);
-        setHasPinged(true);
-      } catch (err) {
-        console.error("API Error", err);
-      } finally {
-        setIsWakingUp(false);
+  debounceRef.current = setTimeout(async () => {
+    try {
+      if (!hasPinged) {
+        setIsWakingUp(true);
       }
-    } else {
-      setSuggestions([]);
+
+      setIsSearching(true);
+
+      const res = await axios.get(
+        `https://ayush-backend-0h8n.onrender.com/api/search?q=${val}`
+      );
+
+      setSuggestions(res.data);
+      setHasPinged(true);
+    } catch (err) {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setIsSearching(false);
+      setIsWakingUp(false);
     }
-  };
+  }, 300); // debounce delay
+};
+
 
 
   // Handles clicking a dropdown item
@@ -58,6 +75,24 @@ function App() {
         suggestions={suggestions}
         handleSelect={handleSelect}
       />
+            {isSearching && (
+        <div className="empty-state" style={{ marginTop: "1rem" }}>
+          <p>Searching…</p>
+        </div>
+      )}
+
+      {!isSearching && query.length > 1 && suggestions.length === 0 && !error && (
+        <div className="empty-state" style={{ marginTop: "1rem" }}>
+          <p>No matching condition found</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="empty-state" style={{ marginTop: "1rem", color: "red" }}>
+          <p>{error}</p>
+        </div>
+      )}
+
       {isWakingUp && (
         <div className="empty-state" style={{ marginTop: "1rem" }}>
           <p>Starting backend service… first request may take a moment.</p>
